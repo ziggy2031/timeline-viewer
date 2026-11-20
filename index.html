@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob: https://tile.openstreetmap.org https://*.tile.openstreetmap.org; connect-src 'self' https://nominatim.openstreetmap.org https://portal.spatial.nsw.gov.au; style-src 'self' 'unsafe-inline'; script-src 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timeline Viewer</title>
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<aside id="side">
+  <div class="bar">
+    <button id="open">Open…</button>
+    <span id="file"></span>
+    <button id="forget" title="Remove the saved timeline from this browser" hidden>Forget</button>
+  </div>
+  <div class="opt" id="placesBar">Saved places:
+    <button id="pexp" title="Download your corrected places as a file">Export</button>
+    <button id="pimp" title="Load corrected places from a file (merges)">Import</button>
+    <span id="pcount"></span>
+  </div>
+  <div class="search">
+    <input id="q" placeholder="Search a place — Japan, Bondi Beach…">
+    <button id="go">Find</button>
+  </div>
+  <div class="tabs">
+    <button id="tabDay" class="on">Day</button>
+    <button id="tabWeek">Week diary</button>
+    <button id="tabRange">Date range</button>
+  </div>
+  <div class="opt">Hide stops shorter than
+    <select id="minStop">
+      <option value="0">— show all —</option>
+      <option value="2">2 min</option>
+      <option value="5">5 min</option>
+      <option value="10">10 min</option>
+      <option value="15">15 min</option>
+      <option value="30">30 min</option>
+    </select>
+  </div>
+  <div class="nav" id="dayNav">
+    <button id="prev" title="Previous day with data (←)">◀</button>
+    <input type="date" id="date">
+    <button id="next" title="Next day with data (→)">▶</button>
+  </div>
+  <div id="dayLbl" class="dayLbl"></div>
+  <div class="nav wrap" id="weekNav" hidden>
+    <button id="wprev" title="Previous week">◀</button>
+    <input type="date" id="wdate" title="Any date — shows that week (Mon–Sun)">
+    <button id="wnext" title="Next week">▶</button>
+    <button id="wcopy" title="Copy the week as plain text">Copy</button>
+    <button id="wcsv" title="Export the week as CSV">CSV</button>
+  </div>
+  <div class="nav wrap" id="rangeNav" hidden>
+    <input type="date" id="from" title="From">
+    <input type="date" id="to" title="To">
+    <select id="colorBy">
+      <option value="day">Colour by day</option>
+      <option value="mode">Colour by transport</option>
+    </select>
+    <button id="showRange">Show</button>
+  </div>
+  <div id="stats"></div>
+  <div id="list"></div>
+</aside>
+<main>
+  <div id="map"></div>
+  <div id="empty">Open your <b>Timeline.json</b> or drop it here</div>
+</main>
+<script src="vendor/leaflet/leaflet.js"></script>
+<script src="parser.js"></script>
+<script src="api.js"></script>
+<script src="renderer.js"></script>
+</body>
+</html>

@@ -108,6 +108,7 @@ function startEdit(r, host, done) {
     if (sp) { sp.name = name; sp.r = radius; if (r.placeId && !sp.pid) sp.pid = r.placeId; }
     else places.push({ id: Date.now().toString(36), name, lat: r.lat, lng: r.lng, r: radius, pid: r.placeId || undefined });
     await window.api.savePlaces(places);
+    $('pcount').textContent = `${places.length} saved`;
     clearNames();
     done();
   };
@@ -115,7 +116,7 @@ function startEdit(r, host, done) {
   host.querySelector('.sv').onclick = save;
   host.querySelector('.cn').onclick = () => done();
   const rm = host.querySelector('.rm');
-  if (rm) rm.onclick = async () => { places = places.filter(p => p !== sp); await window.api.savePlaces(places); clearNames(); done(); };
+  if (rm) rm.onclick = async () => { places = places.filter(p => p !== sp); await window.api.savePlaces(places); $('pcount').textContent = `${places.length} saved`; clearNames(); done(); };
 }
 
 // ---------------- Mode / data ----------------
@@ -142,6 +143,7 @@ function setData(res) {
   keys = [...days.keys()].sort();
   lastSearch = null; rangeSel = null;
   $('file').textContent = res.path;
+  $('forget').hidden = false;
   $('empty').classList.add('hide');
   if (keys.length) show(lastKey());
 }
@@ -297,7 +299,7 @@ function show(k, opts = {}) {
     el.className = 'item';
     if (r.kind === 'visit') {
       el.style.borderLeftColor = '#0b4fb3';
-      el.innerHTML = `<div class="ico">📍</div><div style="flex:1;min-width:0"><div class="t">${r.n}. ${esc(r.label)}${r.count > 1 ? ` <span class="s">(${r.count} stops merged)</span>` : ''}</div><div class="addr">Looking up address…</div><div class="s">${hhmm(r.start)}–${hhmm(r.end)} · ${fmtDur(r.t1 - r.t0)} · <a href="https://www.google.com/maps?q=${r.lat},${r.lng}" target="_blank" style="color:#6db3ff">Google Maps</a> · <span class="pen">✏️ Correct</span></div></div>`;
+      el.innerHTML = `<div class="ico">📍</div><div style="flex:1;min-width:0"><div class="t">${r.n}. ${esc(r.label)}${r.count > 1 ? ` <span class="s">(${r.count} stops merged)</span>` : ''}</div><div class="addr">Looking up address…</div><div class="s">${hhmm(r.start)}–${hhmm(r.end)} · ${fmtDur(r.t1 - r.t0)} · <a href="https://www.google.com/maps?q=${r.lat},${r.lng}" target="_blank" rel="noopener" style="color:#6db3ff">Google Maps</a> · <span class="pen">✏️ Correct</span></div></div>`;
       r.addrEl = el.querySelector('.addr');
       if (r.addr) paint(r);
       el.querySelector('.pen').onclick = e => { e.stopPropagation(); startEdit(r, r.addrEl, refresh); };
@@ -599,6 +601,22 @@ $('minStop').onchange = e => {
   refresh();
 };
 $('go').onclick = doSearch;
+$('forget').onclick = async () => {
+  if (!confirm('Remove the saved timeline from this browser? Your corrected places are kept.')) return;
+  await window.api.forget();
+  location.reload();
+};
+$('pexp').onclick = () => window.api.exportPlaces(places);
+$('pimp').onclick = async () => {
+  const res = await window.api.importPlaces(places);
+  if (!res) return;
+  if (res.error) { alert(res.error); return; }
+  places = res.places;
+  clearNames();
+  $('pcount').textContent = `${places.length} saved`;
+  alert(`Imported ${res.added} new place${res.added === 1 ? '' : 's'} (${places.length} total).`);
+  refresh();
+};
 $('q').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
 window.addEventListener('keydown', e => {
   if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName) || mode !== 'day') return;
@@ -609,13 +627,14 @@ window.addEventListener('dragover', e => e.preventDefault());
 window.addEventListener('drop', async e => {
   e.preventDefault();
   const f = e.dataTransfer.files[0];
-  if (f) { $('file').textContent = 'Loading…'; setData(await window.api.load(window.api.pathFor(f))); }
+  if (f) { $('file').textContent = 'Loading…'; setData(await window.api.load(f)); }
 });
 
 (async () => {
   try { minStop = +(localStorage.getItem('minStop') || 0); } catch {}
   $('minStop').value = String(minStop);
   places = (await window.api.places()) || [];
+  $('pcount').textContent = `${places.length} saved`;
   $('file').textContent = 'Loading…';
   const r = await window.api.last();
   $('file').textContent = '';
